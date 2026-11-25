@@ -1,6 +1,6 @@
 # Commit Plan — 03-Image-Segmentation v0.1.0
 
-Status: planned
+Status: in progress — Day 2 complete
 Window: Mon 2026-11-30 through Sun 2026-12-06
 Target release: `v0.1.0`
 Primary stack: Python 3.13 local (PyTorch 2.14 CPU), Colab GPU for full training
@@ -42,6 +42,11 @@ combine unrelated changes to catch up.
 - Never commit `data/`, weights/checkpoints, run folders, videos, caches, or secrets.
 - Only curated `results/v0.1.0/` artifacts may be tracked.
 - Run the listed check before each commit; do not commit with a failing check.
+- `.gitignore` ignores `docs/*`; already-tracked docs keep tracking updates, but
+  any new documentation file must be force-added (`git add -f <path>`) or the
+  ignore rule must be relaxed first.
+- Each day section carries a commit-log table; fill `Hash` and `Date` when a
+  commit lands and keep `Status` honest (`planned`, `prepared`, `done`).
 
 ## Bootstrap commands (before commit 1)
 
@@ -57,6 +62,12 @@ The scaffold commit is the first commit on `main`.
 |---|--------|----------------------|-------|--------|
 | 1 | `main` | `chore(repo): initialize 03-image-segmentation scaffold` | `.gitignore`, `.gitattributes`, `README.md`, `CHANGELOG.md`, `VERSION`, `AGENTS.md`, `requirements.txt`, `requirements-dev.txt`, `config/unet.yaml`, `src/__init__.py`, `src/config.py`, `src/data.py`, `src/model.py`, `src/losses.py`, `src/metrics.py`, `src/train.py`, `src/evaluate.py`, `src/predict.py`, `src/app.py`, `tests/__init__.py`, `tests/test_config.py`, `docs/commit-plan.md`, `docs/contracts.md` (stub), `docs/reproducibility.md` (stub), `docs/troubleshooting.md` (stub), `docs/pre-build/*`, `learnings/*`, `notebooks/.gitkeep`, `data/.gitkeep`, `models/.gitkeep`, `results/.gitkeep`, `results/README.md` | `python -m pytest tests/test_config.py -q`; `python -m compileall -q src`; `git status --short` |
 
+### Day 1 — Scaffold — actual 2026-11-25
+
+| # | Commit message | Hash | Date | Status |
+|---|----------------|------|------|--------|
+| 1 | `chore(repo): initialize 03-image-segmentation scaffold` | `d1434f6` | 2026-11-25 | done |
+
 Definition of done: config loads, all stage modules import, no data/weights tracked,
 CLI stubs expose `main()` and `--help`.
 
@@ -69,6 +80,16 @@ CLI stubs expose `main()` and `--help`.
 | 4 | `main` | `docs(data): document dataset layout and generation` | `docs/contracts.md` | Markdown review |
 | 5 | `main` | `feat(model): implement U-Net encoder-decoder with skip connections` | `src/model.py` | `python -m src.model --config config/unet.yaml --sanity` |
 | 6 | `main` | `test(model): check forward-pass shapes and depth guards` | `tests/test_model.py` | `python -m pytest tests/test_model.py -q` |
+
+### Day 2 — Data + model core — actual 2026-11-26
+
+| # | Commit message | Hash | Date | Status |
+|---|----------------|------|------|--------|
+| 2 | `feat(data): generate synthetic image-mask pairs` | `e045917` | 2026-11-26 | done |
+| 3 | `test(data): verify image-mask pairing and splits` | `b75c7dc` | 2026-11-26 | done |
+| 4 | `docs(data): document dataset layout and generation` | `f19eb97` | 2026-11-26 | done |
+| 5 | `feat(model): implement U-Net encoder-decoder with skip connections` | `e7a9e46` | 2026-11-26 | done |
+| 6 | `test(model): check forward-pass shapes and depth guards` | `67099f2` | 2026-11-26 | done |
 
 Definition of done: 64/16/16 synthetic pairs align pixel-for-pixel; model forward
 returns `(B, 1, H, W)`.
@@ -83,6 +104,16 @@ returns `(B, 1, H, W)`.
 | 10 | `main` | `test(model): verify losses and metrics on hand-computed fixtures` | `tests/test_losses.py`, `tests/test_metrics.py` | `python -m pytest tests/test_losses.py tests/test_metrics.py -q` |
 | 11 | `main` | `docs(eval): document metric keys and formulas` | `docs/contracts.md` | Markdown review |
 
+### Day 3 — Model close + losses/metrics
+
+| # | Commit message | Hash | Date | Status |
+|---|----------------|------|------|--------|
+| 7 | `docs(model): document architecture and config knobs` | — | — | planned |
+| 8 | `feat(model): add BCE, Dice, and combined losses` | — | — | planned |
+| 9 | `feat(eval): add IoU, Dice, and pixel-accuracy metrics` | — | — | planned |
+| 10 | `test(model): verify losses and metrics on hand-computed fixtures` | — | — | planned |
+| 11 | `docs(eval): document metric keys and formulas` | — | — | planned |
+
 Definition of done: perfect/disjoint/half-overlap fixtures match hand-computed
 values; losses are finite and differentiable.
 
@@ -94,6 +125,15 @@ values; losses are finite and differentiable.
 | 13 | `main` | `feat(train): add LR scheduling and early stopping` | `src/train.py` | `python -m src.train --help` |
 | 14 | `main` | `test(train): smoke-train one epoch on toy data` | `tests/test_smoke_pipeline.py` | `python -m pytest tests/test_smoke_pipeline.py -q` |
 | 15 | `main` | `docs(train): document training CLI and artifacts` | `docs/contracts.md` | Markdown review |
+
+### Day 4 — Training
+
+| # | Commit message | Hash | Date | Status |
+|---|----------------|------|------|--------|
+| 12 | `feat(train): add seeded training loop with checkpoints` | — | — | planned |
+| 13 | `feat(train): add LR scheduling and early stopping` | — | — | planned |
+| 14 | `test(train): smoke-train one epoch on toy data` | — | — | planned |
+| 15 | `docs(train): document training CLI and artifacts` | — | — | planned |
 
 Definition of done: one tiny CPU epoch writes `models/best.pt`,
 `models/last.pt`, and `results/train_history.json`; loss is finite.
@@ -110,6 +150,18 @@ Definition of done: one tiny CPU epoch writes `models/best.pt`,
 | 21 | `main` | `test(infer): smoke-test single-image inference` | `tests/test_infer.py` | `python -m pytest tests/test_infer.py -q` |
 | 22 | `main` | `docs(infer): document inference flags and outputs` | `docs/contracts.md` | Markdown review |
 
+### Day 5 — Evaluation + inference
+
+| # | Commit message | Hash | Date | Status |
+|---|----------------|------|------|--------|
+| 16 | `feat(eval): evaluate checkpoints and write metrics JSON` | — | — | planned |
+| 17 | `feat(eval): render input-groundtruth-prediction overlays` | — | — | planned |
+| 18 | `test(eval): assert metrics schema and overlay outputs` | — | — | planned |
+| 19 | `docs(eval): document evaluation contract` | — | — | planned |
+| 20 | `feat(infer): predict masks and overlays from checkpoints` | — | — | planned |
+| 21 | `test(infer): smoke-test single-image inference` | — | — | planned |
+| 22 | `docs(infer): document inference flags and outputs` | — | — | planned |
+
 Definition of done: `results/eval/metrics.json` and overlays exist; a checkpoint
 produces `<stem>_mask.png` and `<stem>_overlay.png`.
 
@@ -125,6 +177,18 @@ produces `<stem>_mask.png` and `<stem>_overlay.png`.
 | 28 | `main` | `docs(repo): add reproducibility and troubleshooting guides` | `docs/reproducibility.md`, `docs/troubleshooting.md` | Markdown review |
 | 29 | `main` | `docs(repo): add contracts reference` | `docs/contracts.md` | Markdown review |
 
+### Day 6 — App + smoke + docs
+
+| # | Commit message | Hash | Date | Status |
+|---|----------------|------|------|--------|
+| 23 | `feat(app): build static HTML prediction gallery` | — | — | planned |
+| 24 | `docs(app): document gallery usage` | — | — | planned |
+| 25 | `test(repo): add end-to-end smoke script` | — | — | planned |
+| 26 | `docs(repo): document project checks` | — | — | planned |
+| 27 | `docs(repo): write README overview, quickstart, and pipeline` | — | — | planned |
+| 28 | `docs(repo): add reproducibility and troubleshooting guides` | — | — | planned |
+| 29 | `docs(repo): add contracts reference` | — | — | planned |
+
 Definition of done: static gallery renders prediction pairs; smoke runs
 data → train → eval → predict → app on CPU; README quickstart is complete.
 
@@ -138,6 +202,17 @@ data → train → eval → predict → app on CPU; README quickstart is complet
 | 33 | `main` | `chore(release): bump version to 0.1.0` | `VERSION` | `python -m pytest -q` |
 | 34 | `main` | `docs(release): update changelog for v0.1.0` | `CHANGELOG.md`, `results/v0.1.0/metrics.json`, curated `results/v0.1.0/*.png` | `python scripts/smoke.py`; artifact audit |
 | 35 | `main` | tag `v0.1.0` (annotated) | none | `git tag -n`; `git log --oneline --graph -20` |
+
+### Day 7 — Notebooks + Colab + release
+
+| # | Commit message | Hash | Date | Status |
+|---|----------------|------|------|--------|
+| 30 | `docs(notebook): add data exploration and error analysis notebooks` | — | — | planned |
+| 31 | `feat(notebook): add Colab training notebook` | — | — | planned |
+| 32 | `docs(notebook): document Colab workflow` | — | — | planned |
+| 33 | `chore(release): bump version to 0.1.0` | — | — | planned |
+| 34 | `docs(release): update changelog for v0.1.0` | — | — | planned |
+| 35 | tag `v0.1.0` (annotated) | — | — | planned |
 
 Definition of done: tag `v0.1.0` points at commit 34, CHANGELOG has `[0.1.0]`,
 and a fresh clone can reproduce the toy run.
@@ -190,10 +265,11 @@ Decision point before commit 34:
 
 ## Progress tracker
 
-- [ ] Day 1 — scaffold
-- [ ] Day 2 — data + model core
+- [x] Day 1 — scaffold (commit `d1434f6`)
+- [x] Day 2 — data + model core (commits `e045917`..`67099f2`)
 - [ ] Day 3 — model close + losses/metrics
 - [ ] Day 4 — training
 - [ ] Day 5 — evaluation + inference
 - [ ] Day 6 — app + smoke + docs
 - [ ] Day 7 — notebooks + Colab + release
+
