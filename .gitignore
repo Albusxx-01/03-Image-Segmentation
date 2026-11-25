@@ -23,6 +23,7 @@ data/*
 !data/.gitkeep
 models/*
 !models/.gitkeep
+docs/*
 
 # Results: only curated release artifacts are tracked
 results/*
