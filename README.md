@@ -61,3 +61,4 @@ and run folders never enter git.
 - [`docs/reproducibility.md`](docs/reproducibility.md) — versions, seeds, run order
 - [`docs/troubleshooting.md`](docs/troubleshooting.md) — common failures
 - [`learnings/README.md`](learnings/README.md) — concept notes
+# 03-Image-Segmentation
