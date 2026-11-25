@@ -1,0 +1,7 @@
+# Runtime dependencies for 03-Image-Segmentation.
+# Local target: Python 3.13 + PyTorch 2.x (CPU). Colab uses a GPU runtime.
+torch>=2.2,<3
+numpy>=1.26,<3
+PyYAML>=6.0,<7
+Pillow>=10.0
+matplotlib>=3.8

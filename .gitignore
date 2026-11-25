@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb~
+
+# Datasets and generated assets (never tracked)
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+
+# Results: only curated release artifacts are tracked
+results/*
+!results/.gitkeep
+!results/README.md
+!results/v0.1.0/
+results/v0.1.0/*
+!results/v0.1.0/*.png
+!results/v0.1.0/metrics.json
+
+# Model weights, archives, media
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.onnx
+*.pkl
+*.zip
+*.tar
+*.tar.gz
+*.mp4
+*.mov
+*.avi
+
+# Secrets and local config
+.env
+.env.*
+secrets.json
+*.key
+*.pem
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
