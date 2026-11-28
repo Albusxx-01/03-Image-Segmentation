@@ -79,6 +79,27 @@ With `--sanity`, the CLI runs a forward pass on a zero tensor of
 | `model.depth` | encoder/decoder levels | `4` |
 | `model.dropout` | spatial dropout after each block | `0.0` |
 
+## Metrics
+
+`src/metrics.py` scores raw logits against binary targets. Both sides are
+binarized: predictions use `sigmoid(logits) >= eval.threshold` (default `0.5`)
+and targets use `>= 0.5`, so `{0, 1}` and `{0, 255}` masks are both accepted.
+Every metric aggregates over all elements of the batch (micro-average).
+
+Let `P` be the binarized prediction set and `T` the binarized target set:
+
+| Key | Formula | Empty case (`|P| = |T| = 0`) |
+|-----|---------|------------------------------|
+| `iou` | `|P n T| / |P u T|` | `1.0` |
+| `dice` | `2|P n T| / (|P| + |T|)` | `1.0` |
+| `pixel_accuracy` | `|P = T| / N` | `1.0` |
+
+- `compute_metrics(logits, targets, threshold)` returns exactly these three keys;
+  they are the stable schema written to `results/eval/metrics.json`.
+- Targets may be `(B, C, H, W)` or `(B, H, W)` when `C == 1`; any other mismatch
+  raises `ValueError`.
+- `threshold` must be in `[0, 1]`; out-of-range values raise `ValueError`.
+
 ## Planned contracts
 
 | Stage | Command | Primary artifacts |
