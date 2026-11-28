@@ -24,6 +24,8 @@ data/*
 models/*
 !models/.gitkeep
 docs/*
+docs/pre-build/
+learnings/
 segmentation_run/
 
 # Results: only curated release artifacts are tracked
