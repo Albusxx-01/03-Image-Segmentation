@@ -1,15 +1,20 @@
 # Commit Plan — 03-Image-Segmentation v0.1.0
 
-Status: in progress — Day 3 complete; Day 4 next
+Status: in progress — Days 1-5 and Colab notebook complete; Day 6 app/smoke & release remaining
 Window: Wed 2026-11-25 through Wed 2026-12-02
 Target release: `v0.1.0`
 Primary stack: Python 3.13 local (PyTorch 2.14 CPU), Colab GPU for full training
-Dataset for v0.1.0: deterministic synthetic image/mask pairs
+Dataset for v0.1.0: deterministic synthetic pairs locally; Oxford-IIIT Pet in the
+Colab notebook
 
 This plan is a schedule, not a quota. Commit author dates must be the actual dates.
 Never backdate commits. If a day slips, move the remaining commits forward; never
 combine unrelated changes to catch up. Day 3 slipped from Fri 2026-11-27 to
 Sat 2026-11-28, so Days 4-7 shift one day forward.
+
+Training, evaluation, inference, and the Colab notebook are implemented in the
+working tree. The notebook downloads CVC-ClinicDB from Hugging Face. Their commit
+rows are marked `prepared` until the commits land.
 
 ## Trunk model
 
@@ -131,10 +136,9 @@ values; losses are finite and differentiable.
 
 | # | Commit message | Hash | Date | Status |
 |---|----------------|------|------|--------|
-| 12 | `feat(train): add seeded training loop with checkpoints` | — | — | planned |
-| 13 | `feat(train): add LR scheduling and early stopping` | — | — | planned |
-| 14 | `test(train): smoke-train one epoch on toy data` | — | — | planned |
-| 15 | `docs(train): document training CLI and artifacts` | — | — | planned |
+| 12-13 | `feat(train): wire up seeded training loop with checkpoints and early stopping` | `20210a8` | 2026-11-28 | done |
+| 14 | `test(train): add one-epoch CPU smoke test for training pipeline` | `76db2da` | 2026-11-28 | done |
+| 15 | `docs(contracts): document training, evaluation, and inference contracts` | `031135f` | 2026-11-28 | done |
 
 Definition of done: one tiny CPU epoch writes `models/best.pt`,
 `models/last.pt`, and `results/train_history.json`; loss is finite.
@@ -155,13 +159,12 @@ Definition of done: one tiny CPU epoch writes `models/best.pt`,
 
 | # | Commit message | Hash | Date | Status |
 |---|----------------|------|------|--------|
-| 16 | `feat(eval): evaluate checkpoints and write metrics JSON` | — | — | planned |
-| 17 | `feat(eval): render input-groundtruth-prediction overlays` | — | — | planned |
-| 18 | `test(eval): assert metrics schema and overlay outputs` | — | — | planned |
-| 19 | `docs(eval): document evaluation contract` | — | — | planned |
-| 20 | `feat(infer): predict masks and overlays from checkpoints` | — | — | planned |
-| 21 | `test(infer): smoke-test single-image inference` | — | — | planned |
-| 22 | `docs(infer): document inference flags and outputs` | — | — | planned |
+| 16-17 | `feat(eval): evaluate checkpoints, log metrics, and render overlays` | `78a900e` | 2026-11-28 | done |
+| 18 | `test(eval): verify metrics schema and overlay image outputs` | `524883e` | 2026-11-28 | done |
+| 19 | `docs(contracts): document training, evaluation, and inference contracts` | `031135f` | 2026-11-28 | done |
+| 20 | `feat(infer): predict binary masks and red overlays from checkpoints` | `fd411cf` | 2026-11-28 | done |
+| 21 | `test(infer): smoke-test single-image mask and overlay prediction` | `a09993a` | 2026-11-28 | done |
+| 22 | `docs(contracts): document training, evaluation, and inference contracts` | `031135f` | 2026-11-28 | done |
 
 Definition of done: `results/eval/metrics.json` and overlays exist; a checkpoint
 produces `<stem>_mask.png` and `<stem>_overlay.png`.
@@ -198,7 +201,7 @@ data → train → eval → predict → app on CPU; README quickstart is complet
 | # | Branch | Exact commit message | Files | Checks |
 |---|--------|----------------------|-------|--------|
 | 30 | `main` | `docs(notebook): add data exploration and error analysis notebooks` | `notebooks/01-data-exploration.ipynb`, `notebooks/02-error-analysis.ipynb` | `python -m json.tool` on both notebooks |
-| 31 | `main` | `feat(notebook): add Colab training notebook` | `notebooks/03-colab-train.ipynb` | `python -m json.tool` on notebook |
+| 31 | `main` | `feat(notebook): add Colab training notebook` | `notebooks/03-colab-train.ipynb` | `python -m json.tool` on notebook; compile code cells |
 | 32 | `main` | `docs(notebook): document Colab workflow` | `docs/reproducibility.md`, `README.md` | Markdown review |
 | 33 | `main` | `chore(release): bump version to 0.1.0` | `VERSION` | `python -m pytest -q` |
 | 34 | `main` | `docs(release): update changelog for v0.1.0` | `CHANGELOG.md`, `results/v0.1.0/metrics.json`, curated `results/v0.1.0/*.png` | `python scripts/smoke.py`; artifact audit |
@@ -209,8 +212,8 @@ data → train → eval → predict → app on CPU; README quickstart is complet
 | # | Commit message | Hash | Date | Status |
 |---|----------------|------|------|--------|
 | 30 | `docs(notebook): add data exploration and error analysis notebooks` | — | — | planned |
-| 31 | `feat(notebook): add Colab training notebook` | — | — | planned |
-| 32 | `docs(notebook): document Colab workflow` | — | — | planned |
+| 31 | `feat(notebook): add standalone Oxford-IIIT Pet Colab training notebook` | `a5f1e2b` | 2026-11-28 | done |
+| 32 | `docs(repo): update README, reproducibility, and troubleshooting guides` | `3ab5180` | 2026-11-28 | done |
 | 33 | `chore(release): bump version to 0.1.0` | — | — | planned |
 | 34 | `docs(release): update changelog for v0.1.0` | — | — | planned |
 | 35 | tag `v0.1.0` (annotated) | — | — | planned |
@@ -233,8 +236,9 @@ and a fresh clone can reproduce the toy run.
 ## Colab dependency
 
 `notebooks/03-colab-train.ipynb` is built and syntax-validated locally, but Colab
-execution is performed by the project owner on a GPU runtime. The notebook only
-invokes CLIs; it never imports `src/`.
+execution is performed by the project owner on a GPU runtime. The notebook
+downloads `Aeoo/CVC-ClinicDB` from Hugging Face, writes the project data layout,
+and invokes the CLIs; it never imports `src/`.
 
 Decision point before commit 34:
 
@@ -269,8 +273,8 @@ Decision point before commit 34:
 - [x] Day 1 — scaffold (commit `d1434f6`)
 - [x] Day 2 — data + model core (commits `e045917`..`67099f2`)
 - [x] Day 3 — model close + losses/metrics (commits `b5d881a`..`75e9cdb`)
-- [ ] Day 4 — training
-- [ ] Day 5 — evaluation + inference
-- [ ] Day 6 — app + smoke + docs
-- [ ] Day 7 — notebooks + Colab + release
+- [x] Day 4 — training (commits `20210a8`, `76db2da`, `031135f`)
+- [x] Day 5 — evaluation + inference (commits `78a900e`..`a09993a`)
+- [ ] Day 6 — app + smoke + docs (README/reproducibility/troubleshooting done in `3ab5180`)
+- [ ] Day 7 — notebooks + Colab + release (Colab notebook done in `a5f1e2b`)
 
