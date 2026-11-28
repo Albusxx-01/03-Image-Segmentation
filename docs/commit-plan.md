@@ -1,14 +1,15 @@
 # Commit Plan — 03-Image-Segmentation v0.1.0
 
-Status: in progress — Day 2 complete
-Window: Mon 2026-11-30 through Sun 2026-12-06
+Status: in progress — Day 3 complete; Day 4 next
+Window: Wed 2026-11-25 through Wed 2026-12-02
 Target release: `v0.1.0`
 Primary stack: Python 3.13 local (PyTorch 2.14 CPU), Colab GPU for full training
 Dataset for v0.1.0: deterministic synthetic image/mask pairs
 
 This plan is a schedule, not a quota. Commit author dates must be the actual dates.
 Never backdate commits. If a day slips, move the remaining commits forward; never
-combine unrelated changes to catch up.
+combine unrelated changes to catch up. Day 3 slipped from Fri 2026-11-27 to
+Sat 2026-11-28, so Days 4-7 shift one day forward.
 
 ## Trunk model
 
@@ -23,13 +24,13 @@ combine unrelated changes to catch up.
 
 | Day | Date | Theme | Commits | Milestone |
 |-----|------|-------|---------|-----------|
-| Mon | 2026-11-30 | Scaffold | 1 | M0, M1 |
-| Tue | 2026-12-01 | Data + model core | 5 | M2, M3 |
-| Wed | 2026-12-02 | Model close + losses/metrics | 5 | M3, M4 |
-| Thu | 2026-12-03 | Training | 4 | M5 |
-| Fri | 2026-12-04 | Evaluation + inference | 7 | M6, M7 |
-| Sat | 2026-12-05 | App + smoke + docs | 7 | M8, M9, M10 |
-| Sun | 2026-12-06 | Notebooks + Colab + release | 5 + tag | M10, M11, M12 |
+| Wed | 2026-11-25 | Scaffold | 1 | M0, M1 |
+| Thu | 2026-11-26 | Data + model core | 5 | M2, M3 |
+| Sat | 2026-11-28 | Model close + losses/metrics | 5 | M3, M4 |
+| Sun | 2026-11-29 | Training | 4 | M5 |
+| Mon | 2026-11-30 | Evaluation + inference | 7 | M6, M7 |
+| Tue | 2026-12-01 | App + smoke + docs | 7 | M8, M9, M10 |
+| Wed | 2026-12-02 | Notebooks + Colab + release | 5 + tag | M10, M11, M12 |
 | | | **Total** | **34 + tag** | |
 
 ## Commit rules
@@ -56,13 +57,13 @@ git init -b main
 
 The scaffold commit is the first commit on `main`.
 
-## Day 1 — Mon 2026-11-30 — Scaffold
+## Day 1 — Wed 2026-11-25 — Scaffold
 
 | # | Branch | Exact commit message | Files | Checks |
 |---|--------|----------------------|-------|--------|
 | 1 | `main` | `chore(repo): initialize 03-image-segmentation scaffold` | `.gitignore`, `.gitattributes`, `README.md`, `CHANGELOG.md`, `VERSION`, `AGENTS.md`, `requirements.txt`, `requirements-dev.txt`, `config/unet.yaml`, `src/__init__.py`, `src/config.py`, `src/data.py`, `src/model.py`, `src/losses.py`, `src/metrics.py`, `src/train.py`, `src/evaluate.py`, `src/predict.py`, `src/app.py`, `tests/__init__.py`, `tests/test_config.py`, `docs/commit-plan.md`, `docs/contracts.md` (stub), `docs/reproducibility.md` (stub), `docs/troubleshooting.md` (stub), `docs/pre-build/*`, `learnings/*`, `notebooks/.gitkeep`, `data/.gitkeep`, `models/.gitkeep`, `results/.gitkeep`, `results/README.md` | `python -m pytest tests/test_config.py -q`; `python -m compileall -q src`; `git status --short` |
 
-### Day 1 — Scaffold — actual 2026-11-25
+### Day 1 — Scaffold
 
 | # | Commit message | Hash | Date | Status |
 |---|----------------|------|------|--------|
@@ -71,7 +72,7 @@ The scaffold commit is the first commit on `main`.
 Definition of done: config loads, all stage modules import, no data/weights tracked,
 CLI stubs expose `main()` and `--help`.
 
-## Day 2 — Tue 2026-12-01 — Data + model core
+## Day 2 — Thu 2026-11-26 — Data + model core
 
 | # | Branch | Exact commit message | Files | Checks |
 |---|--------|----------------------|-------|--------|
@@ -81,7 +82,7 @@ CLI stubs expose `main()` and `--help`.
 | 5 | `main` | `feat(model): implement U-Net encoder-decoder with skip connections` | `src/model.py` | `python -m src.model --config config/unet.yaml --sanity` |
 | 6 | `main` | `test(model): check forward-pass shapes and depth guards` | `tests/test_model.py` | `python -m pytest tests/test_model.py -q` |
 
-### Day 2 — Data + model core — actual 2026-11-26
+### Day 2 — Data + model core
 
 | # | Commit message | Hash | Date | Status |
 |---|----------------|------|------|--------|
@@ -94,7 +95,7 @@ CLI stubs expose `main()` and `--help`.
 Definition of done: 64/16/16 synthetic pairs align pixel-for-pixel; model forward
 returns `(B, 1, H, W)`.
 
-## Day 3 — Wed 2026-12-02 — Model close + losses/metrics
+## Day 3 — Sat 2026-11-28 — Model close + losses/metrics
 
 | # | Branch | Exact commit message | Files | Checks |
 |---|--------|----------------------|-------|--------|
@@ -108,16 +109,16 @@ returns `(B, 1, H, W)`.
 
 | # | Commit message | Hash | Date | Status |
 |---|----------------|------|------|--------|
-| 7 | `docs(model): document architecture and config knobs` | — | — | planned |
-| 8 | `feat(model): add BCE, Dice, and combined losses` | — | — | planned |
-| 9 | `feat(eval): add IoU, Dice, and pixel-accuracy metrics` | — | — | planned |
-| 10 | `test(model): verify losses and metrics on hand-computed fixtures` | — | — | planned |
-| 11 | `docs(eval): document metric keys and formulas` | — | — | planned |
+| 7 | `docs(model): document architecture and config knobs` | `b5d881a` | 2026-11-28 | done |
+| 8 | `feat(model): add BCE, Dice, and combined losses` | `f17cccd` | 2026-11-28 | done |
+| 9 | `feat(eval): add IoU, Dice, and pixel-accuracy metrics` | `fe9936e` | 2026-11-28 | done |
+| 10 | `test(model): verify losses and metrics on hand-computed fixtures` | `fab7588` | 2026-11-28 | done |
+| 11 | `docs(eval): document metric keys and formulas` | `75e9cdb` | 2026-11-28 | done |
 
 Definition of done: perfect/disjoint/half-overlap fixtures match hand-computed
 values; losses are finite and differentiable.
 
-## Day 4 — Thu 2026-12-03 — Training
+## Day 4 — Sun 2026-11-29 — Training
 
 | # | Branch | Exact commit message | Files | Checks |
 |---|--------|----------------------|-------|--------|
@@ -138,7 +139,7 @@ values; losses are finite and differentiable.
 Definition of done: one tiny CPU epoch writes `models/best.pt`,
 `models/last.pt`, and `results/train_history.json`; loss is finite.
 
-## Day 5 — Fri 2026-12-04 — Evaluation + inference
+## Day 5 — Mon 2026-11-30 — Evaluation + inference
 
 | # | Branch | Exact commit message | Files | Checks |
 |---|--------|----------------------|-------|--------|
@@ -165,7 +166,7 @@ Definition of done: one tiny CPU epoch writes `models/best.pt`,
 Definition of done: `results/eval/metrics.json` and overlays exist; a checkpoint
 produces `<stem>_mask.png` and `<stem>_overlay.png`.
 
-## Day 6 — Sat 2026-12-05 — App + smoke + docs
+## Day 6 — Tue 2026-12-01 — App + smoke + docs
 
 | # | Branch | Exact commit message | Files | Checks |
 |---|--------|----------------------|-------|--------|
@@ -192,7 +193,7 @@ produces `<stem>_mask.png` and `<stem>_overlay.png`.
 Definition of done: static gallery renders prediction pairs; smoke runs
 data → train → eval → predict → app on CPU; README quickstart is complete.
 
-## Day 7 — Sun 2026-12-06 — Notebooks + Colab + release
+## Day 7 — Wed 2026-12-02 — Notebooks + Colab + release
 
 | # | Branch | Exact commit message | Files | Checks |
 |---|--------|----------------------|-------|--------|
@@ -267,7 +268,7 @@ Decision point before commit 34:
 
 - [x] Day 1 — scaffold (commit `d1434f6`)
 - [x] Day 2 — data + model core (commits `e045917`..`67099f2`)
-- [ ] Day 3 — model close + losses/metrics
+- [x] Day 3 — model close + losses/metrics (commits `b5d881a`..`75e9cdb`)
 - [ ] Day 4 — training
 - [ ] Day 5 — evaluation + inference
 - [ ] Day 6 — app + smoke + docs
