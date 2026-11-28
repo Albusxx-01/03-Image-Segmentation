@@ -186,6 +186,25 @@ def seed_from_config(config: dict[str, Any]) -> int:
     return int(config["project"]["seed"])
 
 
+def resolve_device(config: dict[str, Any]) -> str:
+    """Return the configured device, resolving ``auto`` to cuda, mps, or cpu."""
+
+    requested = str(config.get("project", {}).get("device", "auto")).lower()
+    if requested != "auto":
+        return requested
+
+    try:
+        import torch
+    except ImportError:
+        return "cpu"
+
+    if torch.cuda.is_available():
+        return "cuda"
+    if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m src.config",

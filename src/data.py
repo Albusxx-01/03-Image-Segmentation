@@ -1,19 +1,23 @@
-"""Synthetic image/mask dataset generation and split manifests.
+"""Synthetic image/mask dataset generation, preprocessing, and dataloaders.
 
 The generator is deterministic: every pair is rendered from a seed derived from
 ``project.seed`` plus a per-split offset and the pair index. Images and masks are
 written under separate trees with identical filenames so they stay aligned
-pixel-for-pixel. Dataloaders are wired in with the training pipeline (commit 12).
+pixel-for-pixel. Dataloaders resize to ``data.image_size``, normalize images to
+``[-1, 1]``, binarize masks, and apply flip augmentation to the training split.
 """
 
 from __future__ import annotations
 
 import argparse
+import random
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-from PIL import Image, ImageDraw
+import torch
+from PIL import Image, ImageDraw, ImageOps
+from torch.utils.data import DataLoader, Dataset
 
 from src.config import DEFAULT_CONFIG_PATH, load_config, resolve_path
 
@@ -21,6 +25,8 @@ SPLITS = ("train", "val", "test")
 _KINDS = ("images", "masks")
 _SPLIT_SEED_OFFSET = {"train": 0, "val": 1_000_000, "test": 2_000_000}
 _SUPPORTED_CHANNELS = (1, 3)
+_NORMALIZE_MEAN = 0.5
+_NORMALIZE_STD = 0.5
 
 
 class DataError(RuntimeError):
@@ -159,10 +165,106 @@ def list_pairs(config: dict[str, Any], split: str) -> list[tuple[Path, Path]]:
     return pairs
 
 
-def build_dataloaders(config: dict[str, Any]) -> dict[str, Any]:
+class SegmentationDataset(Dataset):
+    """Image/mask pairs resized, normalized, and optionally flipped."""
+
+    def __init__(
+        self,
+        pairs: list[tuple[Path, Path]],
+        image_size: tuple[int, int],
+        channels: int,
+        augment: bool = False,
+    ) -> None:
+        if channels not in _SUPPORTED_CHANNELS:
+            raise DataError(f"data.channels must be one of {_SUPPORTED_CHANNELS}")
+        self.pairs = list(pairs)
+        self.image_size = (int(image_size[1]), int(image_size[0]))
+        self.channels = channels
+        self.augment = augment
+
+    def __len__(self) -> int:
+        return len(self.pairs)
+
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
+        image_path, mask_path = self.pairs[index]
+        mode = "RGB" if self.channels == 3 else "L"
+
+        with Image.open(image_path) as raw_image:
+            image = raw_image.convert(mode).resize(self.image_size, Image.BILINEAR)
+        with Image.open(mask_path) as raw_mask:
+            mask = raw_mask.convert("L").resize(self.image_size, Image.NEAREST)
+
+        if self.augment:
+            if random.random() < 0.5:
+                image = ImageOps.mirror(image)
+                mask = ImageOps.mirror(mask)
+            if random.random() < 0.5:
+                image = ImageOps.flip(image)
+                mask = ImageOps.flip(mask)
+
+        image_array = np.asarray(image, dtype=np.float32) / 255.0
+        mask_array = (np.asarray(mask, dtype=np.float32) > 127.0).astype(np.float32)
+
+        if self.channels == 3:
+            image_tensor = torch.from_numpy(image_array).permute(2, 0, 1)
+        else:
+            image_tensor = torch.from_numpy(image_array).unsqueeze(0)
+        image_tensor = (image_tensor - _NORMALIZE_MEAN) / _NORMALIZE_STD
+        mask_tensor = torch.from_numpy(mask_array).unsqueeze(0)
+        return image_tensor, mask_tensor
+
+
+def image_to_display(image: torch.Tensor) -> np.ndarray:
+    """Convert a normalized ``(C, H, W)`` tensor to an ``(H, W, 3)`` RGB array."""
+
+    array = image.detach().cpu().float().clamp(-1.0, 1.0)
+    array = (array + 1.0) / 2.0
+    array = array.permute(1, 2, 0).numpy()
+    if array.shape[2] == 1:
+        array = np.repeat(array, 3, axis=2)
+    return np.clip(array, 0.0, 1.0)
+
+
+def build_dataloader(
+    config: dict[str, Any],
+    split: str,
+    batch_size: int | None = None,
+    shuffle: bool | None = None,
+) -> DataLoader:
+    """Build a dataloader for one split with the configured preprocessing."""
+
+    if split not in SPLITS:
+        raise DataError(f"unknown split: {split}")
+
+    data = config["data"]
+    image_size = tuple(int(value) for value in data["image_size"])
+    channels = int(data["channels"])
+    if channels not in _SUPPORTED_CHANNELS:
+        raise DataError(f"data.channels must be one of {_SUPPORTED_CHANNELS}")
+
+    dataset = SegmentationDataset(
+        list_pairs(config, split),
+        image_size=image_size,
+        channels=channels,
+        augment=split == "train",
+    )
+    if batch_size is None:
+        batch_size = int(config["train"]["batch_size"])
+    if shuffle is None:
+        shuffle = split == "train"
+    return DataLoader(
+        dataset,
+        batch_size=int(batch_size),
+        shuffle=shuffle,
+        num_workers=int(data.get("num_workers", 0)),
+        pin_memory=torch.cuda.is_available(),
+    )
+
+
+def build_dataloaders(config: dict[str, Any]) -> dict[str, DataLoader]:
     """Build train/val/test dataloaders from the generated dataset."""
 
-    raise NotImplementedError("dataloaders land with the training pipeline (commit 12)")
+    return {split: build_dataloader(config, split) for split in SPLITS}
 
 
 def main(argv: list[str] | None = None) -> int:
