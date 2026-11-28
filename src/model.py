@@ -8,6 +8,7 @@ feature maps line up at every skip connection.
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -127,6 +128,21 @@ def build_model(config: dict[str, Any]) -> UNet:
         depth=model["depth"],
         dropout=model.get("dropout", 0.0),
     )
+
+
+def load_checkpoint(
+    path: str | Path,
+    config: dict[str, Any],
+    device: str | torch.device = "cpu",
+) -> UNet:
+    """Load a U-Net from a training checkpoint or a raw state dict."""
+
+    model = build_model(config).to(device)
+    state = torch.load(path, map_location=device)
+    model_state = state.get("model_state", state) if isinstance(state, dict) else state
+    model.load_state_dict(model_state)
+    model.eval()
+    return model
 
 
 def main(argv: list[str] | None = None) -> int:

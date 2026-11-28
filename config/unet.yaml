@@ -47,6 +47,7 @@ eval:
   threshold: 0.5
   output_dir: results/eval
   metrics_path: results/eval/metrics.json
+  num_overlays: 8
 
 infer:
   threshold: 0.5
