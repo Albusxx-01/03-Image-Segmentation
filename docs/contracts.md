@@ -41,6 +41,44 @@ python -m src.data --config config/unet.yaml --force
   `{split: count}` mapping; `list_pairs(config, split)` returns sorted
   `(image_path, mask_path)` tuples.
 
+## Model
+
+`UNet` in `src/model.py` is a symmetric encoder-decoder with concatenative skip
+connections.
+
+- Encoder: `model.depth` levels. Each level is two 3x3 convolutions with batch
+  norm and ReLU, followed by 2x2 max pooling. Level `l` (0-based) uses
+  `model.base_filters * 2**l` channels.
+- Bottleneck: one `ConvBlock` at `model.base_filters * 2**model.depth`.
+- Decoder: one `ConvTranspose2d(kernel=2, stride=2)` per level. The matching
+  encoder feature map is concatenated before a `ConvBlock` that returns to the
+  skip channel count.
+- Head: 1x1 convolution mapping to `model.out_channels` logits.
+
+Invariants:
+
+- Input is `(B, model.in_channels, H, W)`; output is
+  `(B, model.out_channels, H, W)` with raw logits (no sigmoid).
+- `H` and `W` must be divisible by `2 ** model.depth`; otherwise the forward pass
+  raises `ValueError`.
+- `depth >= 1`, `base_filters > 0`, and channel counts must be positive.
+- `model.dropout > 0` appends `Dropout2d` to every `ConvBlock`.
+
+```bash
+python -m src.model --config config/unet.yaml --sanity
+```
+
+With `--sanity`, the CLI runs a forward pass on a zero tensor of
+`data.image_size` and prints the output shape; without it, it prints the module.
+
+| Key | Meaning | v0.1.0 |
+|-----|---------|--------|
+| `model.in_channels` | input image channels | `3` |
+| `model.out_channels` | logit channels (`1` for binary) | `1` |
+| `model.base_filters` | first-level channel count | `32` |
+| `model.depth` | encoder/decoder levels | `4` |
+| `model.dropout` | spatial dropout after each block | `0.0` |
+
 ## Planned contracts
 
 | Stage | Command | Primary artifacts |
